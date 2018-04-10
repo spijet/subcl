@@ -211,18 +211,21 @@ class SubsonicAPI
   end
 
   def build_url(method, params)
-    params[:v] = @configs[:proto_version]
-    params[:c] = @configs[:appname]
-    query = params.collect {|k,v| "#{k}=#{URI.escape(v.to_s)}"}.join('&')
+    url_params = params.merge(
+      v: @configs[:proto_version],
+      c: @configs[:appname],
+      u: @configs[:username],
+      p: 'enc:' + @configs[:password].unpack('H*').first,
+      estimateContentLength: true
+    )
+    query = url_params.collect { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')
 
     URI("#{@configs[:server]}/rest/#{method}?#{query}")
   end
 
-  #adds the basic auth parameters from the config to the URI
-  def add_basic_auth(uri)
-    uri.user = @configs[:username]
-    uri.password = @configs[:password]
-    return uri
+  # Adds the basic auth parameters from the config to the URI
+  def add_auth_params(uri)
+    uri
   end
 
   # Returns the streaming URL for the song, including basic auth
